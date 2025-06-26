@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "acera-api"
+version = "0.1.0"
+description = "FastAPI backend for Acera"
+authors = ["Acera Team <team@acera.ai>"]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.110.0"
+uvicorn = {extras = ["standard"], version = "^0.29.0"}
+pydantic = "^2.6.0"
+trpc = "^0.0.13"
+psycopg2-binary = "^2.9.9"
+prisma = "^0.12.0"
+timescale = "*"
+pgvector = "^0.2.4"
+clerk-sdk = "*"
+openai = "^1.0.0"
+langchain = "^0.1.0"
+pinecone-client = "^3.0.0"
+pytest = "^8.0.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api" 

@@ -1,0 +1,20 @@
+generator client {
+  provider = "prisma-client-py"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Stock {
+  symbol      String   @id
+  name        String
+  sector      String
+  market_cap  BigInt
+  roe         Float
+  roce        Float
+  de_ratio    Float
+  eps_growth  Float
+  pe          Float
+} 

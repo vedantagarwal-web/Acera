@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg: #0B1120;
+  --color-indigo: #6366F1;
+  --color-emerald: #22C55E;
+  --color-rose: #FB7185;
+  --color-amber: #FBBF24;
+  --radius-card: 20px;
+  --shadow-glass: 0 4px 32px 0 rgba(0,0,0,0.30);
+  font-family: 'Inter', sans-serif;
+}
+.font-heading {
+  font-family: 'Sora', sans-serif;
+} 
