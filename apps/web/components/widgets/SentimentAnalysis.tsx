@@ -1,114 +1,204 @@
 'use client';
 
-import { Gauge } from 'lucide-react';
-
-const mockData = {
-  sentiment: 65, // 0-100 scale
-  indicators: [
-    { name: 'Social Media', value: 75, color: '#10B981' },
-    { name: 'News Articles', value: 60, color: '#6366F1' },
-    { name: 'Trading Volume', value: 85, color: '#8B5CF6' },
-    { name: 'Technical', value: 45, color: '#EC4899' },
-    { name: 'Options Flow', value: 70, color: '#F59E0B' },
-  ],
-  summary: 'Moderately Bullish'
-};
+import { Heart, TrendingUp, TrendingDown, RefreshCw } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { fetchSentimentData, SentimentData } from '../../lib/realTimeData';
 
 export function SentimentAnalysis() {
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-white/70">
-          <Gauge className="w-4 h-4" />
-          <span className="text-sm">Market Sentiment</span>
-        </div>
-        <div className="text-sm font-medium text-white">
-          {mockData.summary}
-        </div>
-      </div>
+  const [sentiment, setSentiment] = useState<SentimentData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-      {/* Main Sentiment Gauge */}
-      <div className="flex items-center justify-center py-4">
-        <div className="relative w-32 h-32">
-          <svg className="w-full h-full" viewBox="0 0 100 100">
-            {/* Background circle */}
-            <circle
-              cx="50"
-              cy="50"
-              r="45"
-              fill="none"
-              stroke="#1F2937"
-              strokeWidth="10"
-            />
-            {/* Sentiment indicator */}
-            <circle
-              cx="50"
-              cy="50"
-              r="45"
-              fill="none"
-              stroke="#6366F1"
-              strokeWidth="10"
-              strokeDasharray={`${mockData.sentiment * 2.83} 283`}
-              transform="rotate(-90 50 50)"
-              strokeLinecap="round"
-            />
-            <text
-              x="50"
-              y="50"
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fill="white"
-              fontSize="20"
-              fontWeight="bold"
-            >
-              {mockData.sentiment}%
-            </text>
-          </svg>
-        </div>
-      </div>
+  const fetchData = async () => {
+    try {
+      setError(null);
+      const data = await fetchSentimentData();
+      setSentiment(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load sentiment');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      {/* Custom Progress Bars */}
+  useEffect(() => {
+    fetchData();
+    // Refresh every 2 minutes
+    const interval = setInterval(fetchData, 120000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const getSentimentColor = (value: number) => {
+    if (value >= 70) return 'bg-emerald-500';
+    if (value >= 50) return 'bg-yellow-500';
+    return 'bg-red-500';
+  };
+
+  const getSentimentLabel = (value: number) => {
+    if (value >= 70) return 'Bullish';
+    if (value >= 50) return 'Neutral';
+    return 'Bearish';
+  };
+
+  const getOverallTrend = () => {
+    if (!sentiment) return { icon: null, color: '', label: '' };
+    
+    if (sentiment.overall >= 70) {
+      return { 
+        icon: <TrendingUp className="w-3 h-3 text-emerald-500" />, 
+        color: 'text-emerald-500', 
+        label: 'Very Bullish' 
+      };
+    } else if (sentiment.overall >= 50) {
+      return { 
+        icon: <Heart className="w-3 h-3 text-yellow-500" />, 
+        color: 'text-yellow-500', 
+        label: 'Neutral' 
+      };
+    } else {
+      return { 
+        icon: <TrendingDown className="w-3 h-3 text-red-500" />, 
+        color: 'text-red-500', 
+        label: 'Very Bearish' 
+      };
+    }
+  };
+
+  if (loading && !sentiment) {
+    return (
       <div className="space-y-3">
-        {mockData.indicators.map((indicator, index) => (
-          <div key={index} className="flex items-center justify-between">
-            <div className="flex-1 flex items-center gap-3">
-              <span className="text-xs text-white/70 w-16 text-left">
-                {indicator.name.split(' ')[0]}
-              </span>
-              <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-1000 ease-out"
-                  style={{
-                    width: `${indicator.value}%`,
-                    backgroundColor: indicator.color,
-                  }}
-                />
+        <div className="flex items-center gap-2 text-white/70">
+          <Heart className="w-3 h-3" />
+          <span className="text-xs">Sentiment Analysis</span>
+          <RefreshCw className="w-3 h-3 animate-spin" />
+        </div>
+        <div className="space-y-3">
+          {Array.from({ length: 4 }, (_, i) => (
+            <div key={i} className="space-y-1">
+              <div className="flex justify-between">
+                <div className="h-3 bg-white/10 rounded w-16"></div>
+                <div className="h-3 bg-white/10 rounded w-8"></div>
+              </div>
+              <div className="w-full bg-white/10 rounded-full h-2">
+                <div className="h-2 bg-white/20 rounded-full w-1/2"></div>
               </div>
             </div>
-            <span 
-              className="text-xs font-medium ml-2 w-8 text-right"
-              style={{ color: indicator.color }}
-            >
-              {indicator.value}
-            </span>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error && !sentiment) {
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-white/70">
+            <Heart className="w-3 h-3" />
+            <span className="text-xs">Sentiment Analysis</span>
+          </div>
+          <button
+            onClick={fetchData}
+            className="text-xs text-white/50 hover:text-white/70 transition-colors flex items-center gap-1"
+          >
+            <RefreshCw className="w-3 h-3" />
+            Retry
+          </button>
+        </div>
+        <div className="text-center py-4">
+          <p className="text-red-400 text-xs">Failed to load sentiment</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!sentiment) return null;
+
+  const trend = getOverallTrend();
+  
+  const sentimentMetrics = [
+    { label: 'Overall', value: sentiment.overall },
+    { label: 'Social', value: sentiment.social },
+    { label: 'News', value: sentiment.news },
+    { label: 'Trading', value: sentiment.trading },
+  ];
+
+  return (
+    <div className="space-y-3">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-white/70">
+          <Heart className="w-3 h-3" />
+          <span className="text-xs">Sentiment Analysis</span>
+          {loading && <RefreshCw className="w-3 h-3 animate-spin opacity-50" />}
+        </div>
+        <div className="flex items-center gap-1">
+          {trend.icon}
+          <span className={`text-xs ${trend.color}`}>{trend.label}</span>
+        </div>
+      </div>
+
+      {/* Overall Sentiment Score */}
+      <div className="p-2 rounded-lg bg-white/5">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-white text-xs font-medium">Market Sentiment</span>
+          <span className={`text-xs font-medium ${getSentimentColor(sentiment.overall) === 'bg-emerald-500' ? 'text-emerald-500' : getSentimentColor(sentiment.overall) === 'bg-yellow-500' ? 'text-yellow-500' : 'text-red-500'}`}>
+            {sentiment.overall}%
+          </span>
+        </div>
+        <div className="w-full bg-white/10 rounded-full h-2">
+          <div
+            className={`h-2 rounded-full transition-all duration-500 ${getSentimentColor(sentiment.overall)}`}
+            style={{ width: `${sentiment.overall}%` }}
+          ></div>
+        </div>
+        <div className="flex justify-between mt-1 text-xs text-white/40">
+          <span>Bearish</span>
+          <span>Bullish</span>
+        </div>
+      </div>
+
+      {/* Detailed Metrics */}
+      <div className="space-y-2">
+        {sentimentMetrics.map((metric, index) => (
+          <div key={index}>
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-white/70 text-xs">{metric.label}</span>
+              <span className="text-white text-xs">{metric.value}%</span>
+            </div>
+            <div className="w-full bg-white/10 rounded-full h-1.5">
+              <div
+                className={`h-1.5 rounded-full transition-all duration-500 ${getSentimentColor(metric.value)}`}
+                style={{ width: `${metric.value}%` }}
+              ></div>
+            </div>
           </div>
         ))}
       </div>
 
-      {/* Summary Stats */}
-      <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/10">
-        <div className="text-center">
-          <div className="text-xs text-white/50">Bulls</div>
-          <div className="text-sm font-medium text-green-400">68%</div>
+      {/* Bull/Bear Distribution */}
+      <div className="p-2 rounded-lg bg-white/5">
+        <div className="text-xs text-white/70 mb-2">Distribution</div>
+        <div className="flex items-center gap-2 text-xs">
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-emerald-500 rounded"></div>
+            <span className="text-white/60">Bull {sentiment.bullPercent}%</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-yellow-500 rounded"></div>
+            <span className="text-white/60">Neutral {sentiment.neutralPercent}%</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-red-500 rounded"></div>
+            <span className="text-white/60">Bear {sentiment.bearPercent}%</span>
+          </div>
         </div>
-        <div className="text-center">
-          <div className="text-xs text-white/50">Neutral</div>
-          <div className="text-sm font-medium text-gray-400">17%</div>
-        </div>
-        <div className="text-center">
-          <div className="text-xs text-white/50">Bears</div>
-          <div className="text-sm font-medium text-red-400">15%</div>
-        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="flex justify-between items-center text-xs text-white/30 border-t border-white/10 pt-2">
+        <span>Live Sentiment</span>
+        <span>Updated {new Date().toLocaleTimeString()}</span>
       </div>
     </div>
   );

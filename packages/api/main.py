@@ -7,7 +7,7 @@ load_dotenv()
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from routers import stocks, screens, content, news
+from routers import stocks, screens, content, news, market, ai
 import os
 from contextlib import asynccontextmanager
 import uvloop
@@ -61,6 +61,8 @@ app.include_router(stocks.router, prefix="/api", tags=["Stocks"])
 app.include_router(news.router, prefix="/api", tags=["News"])
 app.include_router(screens.router, prefix="/api", tags=["Screening"])
 app.include_router(content.router, prefix="/api", tags=["Content"])
+app.include_router(market.router, prefix="/api", tags=["Market"])
+app.include_router(ai.router, prefix="/api", tags=["AI"])
 
 @app.get("/")
 async def root():

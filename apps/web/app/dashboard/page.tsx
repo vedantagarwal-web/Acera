@@ -19,6 +19,7 @@ import {
 import Link from 'next/link';
 
 // Import all our widgets with named imports
+import { SearchBar } from '../../components/SearchBar';
 import { MarketOverview } from '../../components/widgets/MarketOverview';
 import { AiInsights } from '../../components/widgets/AiInsights';
 import { NewsFeed } from '../../components/widgets/NewsFeed';
@@ -289,14 +290,7 @@ export default function Dashboard() {
             </div>
             
             <div className="flex items-center space-x-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className={`pl-8 pr-4 py-2 w-60 rounded-lg glass border-none text-white placeholder-gray-400 focus:ring-1 focus:ring-${accentColor}-500/50 focus:outline-none transition-all text-xs`}
-                />
-              </div>
+              <SearchBar accentColor={accentColor} />
               
               <button 
                 onClick={toggleFullscreen}
