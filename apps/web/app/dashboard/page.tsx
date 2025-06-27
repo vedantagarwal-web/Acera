@@ -148,12 +148,38 @@ export default function Dashboard() {
   const [backgroundGradient, setBackgroundGradient] = useState('');
   const [accentColor, setAccentColor] = useState('blue');
   const [marketStatus, setMarketStatus] = useState({ status: 'Loading...', color: 'gray-500', pulse: false });
+  const [viewportHeight, setViewportHeight] = useState(0);
+  const [availableHeight, setAvailableHeight] = useState(0);
+
+  // Calculate available height dynamically
+  const calculateAvailableHeight = () => {
+    const vh = window.innerHeight;
+    const vw = window.innerWidth;
+    const isMobile = vw < 768;
+    const isFullscreenMode = !!document.fullscreenElement;
+    
+    // Adjust heights based on screen size and mode
+    const navHeight = isFullscreenMode ? 50 : (isMobile ? 55 : 60);
+    const statusHeight = isFullscreenMode ? 35 : (isMobile ? 40 : 45);
+    const customizationHeight = isCustomizing ? (isMobile ? 60 : 70) : 0;
+    const padding = isMobile ? 15 : 20;
+    const safetyBuffer = isFullscreenMode ? 10 : (isMobile ? 15 : 20);
+    
+    const totalOverhead = navHeight + statusHeight + customizationHeight + padding + safetyBuffer;
+    const available = vh - totalOverhead;
+    
+    setViewportHeight(vh);
+    setAvailableHeight(Math.max(available, isMobile ? 300 : 400)); // Lower minimum for mobile
+  };
 
   useEffect(() => {
     setMounted(true);
     setBackgroundGradient(getMarketGradient());
     setAccentColor(getAccentColor());
     setMarketStatus(getMarketStatus());
+    
+    // Calculate initial height
+    calculateAvailableHeight();
     
     // Update gradient every 30 seconds for more dynamic feel
     const interval = setInterval(() => {
@@ -162,8 +188,18 @@ export default function Dashboard() {
       setMarketStatus(getMarketStatus());
     }, 30000);
     
-    return () => clearInterval(interval);
-  }, []);
+    // Handle resize events
+    const handleResize = () => {
+      calculateAvailableHeight();
+    };
+    
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [isCustomizing]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -194,15 +230,15 @@ export default function Dashboard() {
     
     const Component = widget.component;
     return (
-      <div key={widgetId} className="p-2">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-            {widget.title}
-            {widget.id === 'ai-insights' && <Sparkles className="w-4 h-4 text-amber-400" />}
-          </h3>
-          <button className="p-1 rounded glass hover:bg-white/10 transition-all group">
-            <Maximize2 className="w-3 h-3 text-white/50 group-hover:text-white/70" />
-          </button>
+      <div key={widgetId} className="p-1">
+        <div className="flex items-center justify-between mb-1">
+                      <h3 className="text-xs font-semibold text-white flex items-center gap-1.5">
+              {widget.title}
+              {widget.id === 'ai-insights' && <Sparkles className="w-3 h-3 text-amber-400" />}
+            </h3>
+                      <button className="p-0.5 rounded glass hover:bg-white/10 transition-all group">
+              <Maximize2 className="w-2.5 h-2.5 text-white/50 group-hover:text-white/70" />
+            </button>
         </div>
         <Component />
       </div>
@@ -235,7 +271,7 @@ export default function Dashboard() {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/5 via-transparent to-transparent pointer-events-none"></div>
       {/* Professional Navigation */}
       <nav className="glass-nav border-b border-white/10">
-        <div className="max-w-full px-4 py-1.5">
+        <div className="max-w-full px-4 py-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Link href="/" className="flex items-center space-x-2">
@@ -297,13 +333,13 @@ export default function Dashboard() {
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
-          className="glass-card mx-4 mt-2 mb-1 p-3 border-b"
+          className="glass-card mx-2 mt-0.5 mb-0.5 p-1.5 border-b"
         >
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-amber-400" />
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-xs font-semibold text-white flex items-center gap-1.5">
+              <Sparkles className="w-3 h-3 text-amber-400" />
               Customize Widgets
-              <span className="text-xs text-gray-400 ml-2">(Max 6 for optimal fit)</span>
+              <span className="text-xs text-gray-400 ml-2">(Max 6)</span>
             </h3>
             <button 
               onClick={() => setIsCustomizing(false)}
@@ -312,7 +348,7 @@ export default function Dashboard() {
               Close
             </button>
           </div>
-          <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
+          <div className="grid grid-cols-4 md:grid-cols-8 gap-1.5">
             {availableWidgets.map((widget) => (
               <button
                 key={widget.id}
@@ -331,16 +367,23 @@ export default function Dashboard() {
       )}
 
       {/* Full Height Widget Grid - No Scroll */}
-      <div className="flex-1 overflow-hidden px-4 pb-2">
-        <div className="h-full grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+      <div 
+        className="flex-1 overflow-hidden px-2 py-1"
+        style={{ height: `${availableHeight}px` }}
+      >
+        <div className="h-full grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1.5">
           {activeWidgets.slice(0, 6).map((widgetId, index) => (
-            <motion.div
-              key={widgetId}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: index * 0.02 }}
-              className={`${getGridColSpan(widgetId)} widget-container-compact group`}
-            >
+                          <motion.div
+                key={widgetId}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: index * 0.02 }}
+                className={`${getGridColSpan(widgetId)} group`}
+                style={{ 
+                  height: `${Math.floor(availableHeight / 2) - (mounted && window.innerWidth < 768 ? 6 : 8)}px`,
+                  maxHeight: `${Math.floor(availableHeight / 2) - (mounted && window.innerWidth < 768 ? 6 : 8)}px`
+                }}
+              >
               <div className="h-full glass-card overflow-hidden hover:shadow-lg hover:shadow-black/20 transition-all duration-300">
                 {getWidgetComponent(widgetId)}
               </div>
@@ -351,7 +394,7 @@ export default function Dashboard() {
 
       {/* Professional Status Bar */}
       <div className="glass-nav border-t border-white/10">
-        <div className="max-w-full px-4 py-1.5">
+        <div className="max-w-full px-4 py-1">
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center space-x-6">
               <div className="flex items-center space-x-2">
@@ -375,6 +418,11 @@ export default function Dashboard() {
               <div className="text-gray-400">
                 Last updated: <span className="text-white">2 mins ago</span>
               </div>
+              {mounted && process.env.NODE_ENV === 'development' && (
+                <div className="text-gray-500 text-xs">
+                  H: {viewportHeight}px | Available: {availableHeight}px | Widget: {Math.floor(availableHeight / 2) - 8}px
+                </div>
+              )}
               <div className="flex items-center gap-2">
                 <span className="text-gray-500 text-xs">Made with</span>
                 <span className="text-red-500 animate-pulse">❤️</span>
@@ -387,13 +435,11 @@ export default function Dashboard() {
 
       {/* Enhanced Custom Styles */}
       <style jsx>{`
-        .widget-container-compact {
-          height: calc((100vh - 240px) / 2);
-          max-height: calc((100vh - 240px) / 2);
-          min-height: 300px;
+        .widget-container {
+          min-height: 180px;
         }
         
-        .widget-container-compact:hover {
+        .widget-container:hover {
           transform: translateY(-1px);
         }
         
@@ -429,19 +475,9 @@ export default function Dashboard() {
         }
         
         @media (max-width: 768px) {
-          .widget-container-compact {
-            height: calc((100vh - 180px) / 3);
-            max-height: calc((100vh - 180px) / 3);
-          }
           .col-span-2 {
             grid-column: span 2;
           }
-        }
-        
-        /* Fullscreen adjustments */
-        :fullscreen .widget-container-compact {
-          height: calc((100vh - 140px) / 2);
-          max-height: calc((100vh - 140px) / 2);
         }
         
         /* Market status animations */
