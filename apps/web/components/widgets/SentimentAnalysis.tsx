@@ -1,6 +1,5 @@
 'use client';
 
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 import { Gauge } from 'lucide-react';
 
 const mockData = {
@@ -68,28 +67,48 @@ export function SentimentAnalysis() {
         </div>
       </div>
 
-      {/* Sentiment Indicators */}
-      <div className="h-[100px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={mockData.indicators} layout="vertical">
-            <XAxis type="number" domain={[0, 100]} hide />
-            <YAxis
-              type="category"
-              dataKey="name"
-              tick={{ fill: '#9CA3AF', fontSize: 12 }}
-              width={100}
-            />
-            <Bar
-              dataKey="value"
-              radius={[0, 4, 4, 0]}
-              label={{ position: 'right', fill: '#fff' }}
+      {/* Custom Progress Bars */}
+      <div className="space-y-3">
+        {mockData.indicators.map((indicator, index) => (
+          <div key={index} className="flex items-center justify-between">
+            <div className="flex-1 flex items-center gap-3">
+              <span className="text-xs text-white/70 w-16 text-left">
+                {indicator.name.split(' ')[0]}
+              </span>
+              <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-1000 ease-out"
+                  style={{
+                    width: `${indicator.value}%`,
+                    backgroundColor: indicator.color,
+                  }}
+                />
+              </div>
+            </div>
+            <span 
+              className="text-xs font-medium ml-2 w-8 text-right"
+              style={{ color: indicator.color }}
             >
-              {mockData.indicators.map((entry, index) => (
-                <rect key={index} fill={entry.color} fillOpacity={0.8} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+              {indicator.value}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Summary Stats */}
+      <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/10">
+        <div className="text-center">
+          <div className="text-xs text-white/50">Bulls</div>
+          <div className="text-sm font-medium text-green-400">68%</div>
+        </div>
+        <div className="text-center">
+          <div className="text-xs text-white/50">Neutral</div>
+          <div className="text-sm font-medium text-gray-400">17%</div>
+        </div>
+        <div className="text-center">
+          <div className="text-xs text-white/50">Bears</div>
+          <div className="text-sm font-medium text-red-400">15%</div>
+        </div>
       </div>
     </div>
   );
