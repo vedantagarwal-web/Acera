@@ -194,8 +194,8 @@ export default function Dashboard() {
     
     const Component = widget.component;
     return (
-      <div key={widgetId} className="p-3">
-        <div className="flex items-center justify-between mb-3">
+      <div key={widgetId} className="p-2">
+        <div className="flex items-center justify-between mb-2">
           <h3 className="text-sm font-semibold text-white flex items-center gap-2">
             {widget.title}
             {widget.id === 'ai-insights' && <Sparkles className="w-4 h-4 text-amber-400" />}
@@ -235,7 +235,7 @@ export default function Dashboard() {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/5 via-transparent to-transparent pointer-events-none"></div>
       {/* Professional Navigation */}
       <nav className="glass-nav border-b border-white/10">
-        <div className="max-w-full px-4 py-2">
+        <div className="max-w-full px-4 py-1.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Link href="/" className="flex items-center space-x-2">
@@ -297,7 +297,7 @@ export default function Dashboard() {
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
-          className="glass-card m-4 p-4 border-b"
+          className="glass-card mx-4 mt-2 mb-1 p-3 border-b"
         >
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-white flex items-center gap-2">
@@ -331,8 +331,8 @@ export default function Dashboard() {
       )}
 
       {/* Full Height Widget Grid - No Scroll */}
-      <div className="flex-1 overflow-hidden p-4">
-        <div className="h-full grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="flex-1 overflow-hidden px-4 pb-2">
+        <div className="h-full grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {activeWidgets.slice(0, 6).map((widgetId, index) => (
             <motion.div
               key={widgetId}
@@ -351,7 +351,7 @@ export default function Dashboard() {
 
       {/* Professional Status Bar */}
       <div className="glass-nav border-t border-white/10">
-        <div className="max-w-full px-4 py-2">
+        <div className="max-w-full px-4 py-1.5">
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center space-x-6">
               <div className="flex items-center space-x-2">
@@ -388,7 +388,9 @@ export default function Dashboard() {
       {/* Enhanced Custom Styles */}
       <style jsx>{`
         .widget-container-compact {
-          height: calc((100vh - 180px) / 2);
+          height: calc((100vh - 240px) / 2);
+          max-height: calc((100vh - 240px) / 2);
+          min-height: 300px;
         }
         
         .widget-container-compact:hover {
@@ -428,7 +430,8 @@ export default function Dashboard() {
         
         @media (max-width: 768px) {
           .widget-container-compact {
-            height: calc((100vh - 160px) / 3);
+            height: calc((100vh - 180px) / 3);
+            max-height: calc((100vh - 180px) / 3);
           }
           .col-span-2 {
             grid-column: span 2;
@@ -437,7 +440,8 @@ export default function Dashboard() {
         
         /* Fullscreen adjustments */
         :fullscreen .widget-container-compact {
-          height: calc((100vh - 120px) / 2);
+          height: calc((100vh - 140px) / 2);
+          max-height: calc((100vh - 140px) / 2);
         }
         
         /* Market status animations */
