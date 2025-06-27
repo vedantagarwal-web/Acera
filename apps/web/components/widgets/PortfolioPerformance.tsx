@@ -3,6 +3,7 @@
 import { TrendingUp, TrendingDown, DollarSign, RefreshCw, PieChart } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface PortfolioData {
   totalValue: number;
@@ -67,6 +68,7 @@ const generateMockPortfolioData = (): PortfolioData => {
 export function PortfolioPerformance() {
   const [portfolio, setPortfolio] = useState<PortfolioData | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   const fetchData = async () => {
     try {
@@ -227,10 +229,11 @@ export function PortfolioPerformance() {
         {portfolio.positions.slice(0, 4).map((position, index) => (
           <div
             key={position.symbol}
-            className="flex items-center justify-between p-2 rounded bg-white/5 hover:bg-white/10 transition-colors"
+            onClick={() => router.push(`/stocks/${position.symbol}`)}
+            className="flex items-center justify-between p-2 rounded bg-white/5 hover:bg-white/10 transition-colors cursor-pointer group"
           >
             <div className="flex items-center gap-2">
-              <span className="text-white text-xs font-medium w-10">{position.symbol}</span>
+              <span className="text-white text-xs font-medium w-10 group-hover:text-blue-400 transition-colors">{position.symbol}</span>
               <div className="text-xs text-white/50">
                 {position.shares} shares • {position.weight.toFixed(1)}%
               </div>

@@ -28,23 +28,25 @@ import { MarketSignals } from '../../components/widgets/MarketSignals';
 import { SentimentAnalysis } from '../../components/widgets/SentimentAnalysis';
 import { Watchlist } from '../../components/widgets/Watchlist';
 import { OrderBook } from '../../components/widgets/OrderBook';
+import { TradingChart } from '../../components/widgets/TradingChart';
 
 // Widget configuration for the dashboard
 const availableWidgets = [
   { id: 'market-overview', component: MarketOverview, title: 'Market Overview', size: 'large' },
+  { id: 'trading-chart', component: TradingChart, title: 'Trading Chart', size: 'large' },
   { id: 'ai-insights', component: AiInsights, title: 'AI Insights', size: 'medium' },
-  { id: 'news-feed', component: NewsFeed, title: 'Market News', size: 'medium' },
   { id: 'portfolio', component: PortfolioPerformance, title: 'Portfolio', size: 'large' },
+  { id: 'watchlist', component: Watchlist, title: 'Watchlist', size: 'medium' },
+  { id: 'news-feed', component: NewsFeed, title: 'Market News', size: 'medium' },
   { id: 'signals', component: MarketSignals, title: 'Market Signals', size: 'small' },
   { id: 'sentiment', component: SentimentAnalysis, title: 'Sentiment Analysis', size: 'small' },
-  { id: 'watchlist', component: Watchlist, title: 'Watchlist', size: 'medium' },
   { id: 'orderbook', component: OrderBook, title: 'Order Book', size: 'small' },
 ];
 
 // Optimized layout for perfect viewport fit - only 6 widgets to ensure no scrolling
 const defaultLayout = [
-  'portfolio',
-  'market-overview', 
+  'trading-chart',
+  'portfolio', 
   'ai-insights',
   'watchlist',
   'signals',
@@ -151,6 +153,8 @@ export default function Dashboard() {
   const [marketStatus, setMarketStatus] = useState({ status: 'Loading...', color: 'gray-500', pulse: false });
   const [viewportHeight, setViewportHeight] = useState(0);
   const [availableHeight, setAvailableHeight] = useState(0);
+  const [expandedWidget, setExpandedWidget] = useState<string | null>(null);
+  const [notifications, setNotifications] = useState(true);
 
   // Calculate available height dynamically
   const calculateAvailableHeight = () => {
@@ -233,17 +237,38 @@ export default function Dashboard() {
     return (
       <div key={widgetId} className="p-1">
         <div className="flex items-center justify-between mb-1">
-                      <h3 className="text-xs font-semibold text-white flex items-center gap-1.5">
-              {widget.title}
-              {widget.id === 'ai-insights' && <Sparkles className="w-3 h-3 text-amber-400" />}
-            </h3>
-                      <button className="p-0.5 rounded glass hover:bg-white/10 transition-all group">
-              <Maximize2 className="w-2.5 h-2.5 text-white/50 group-hover:text-white/70" />
-            </button>
+          <h3 className="text-xs font-semibold text-white flex items-center gap-1.5">
+            {widget.title}
+            {widget.id === 'ai-insights' && <Sparkles className="w-3 h-3 text-amber-400" />}
+            {widget.id === 'trading-chart' && <TrendingUp className="w-3 h-3 text-blue-400" />}
+          </h3>
+          <button 
+            onClick={() => setExpandedWidget(widgetId)}
+            className="p-0.5 rounded glass hover:bg-white/10 transition-all group"
+            title="Expand widget"
+          >
+            <Maximize2 className="w-2.5 h-2.5 text-white/50 group-hover:text-white/70" />
+          </button>
         </div>
         <Component />
       </div>
     );
+  };
+
+  const handleExpandedWidgetClose = () => {
+    setExpandedWidget(null);
+  };
+
+  const handleNotificationToggle = () => {
+    setNotifications(!notifications);
+    // In a real app, this would update user preferences
+    console.log('Notifications:', !notifications ? 'enabled' : 'disabled');
+  };
+
+  const handleSettings = () => {
+    // In a real app, this would open settings modal
+    console.log('Opening settings...');
+    alert('Settings panel would open here');
   };
 
   const getGridColSpan = (widgetId: string) => {
@@ -305,15 +330,26 @@ export default function Dashboard() {
                 className={`p-2 rounded-lg glass transition-all hover:scale-105 ${
                   isCustomizing ? `bg-${accentColor}-500/20 text-${accentColor}-400` : 'text-gray-400 hover:text-white'
                 }`}
+                title="Customize Dashboard"
               >
                 <Grid className="w-4 h-4" />
               </button>
               
-              <button className="p-2 rounded-lg glass text-gray-400 hover:text-white transition-all hover:scale-105">
+              <button 
+                onClick={handleNotificationToggle}
+                className={`p-2 rounded-lg glass transition-all hover:scale-105 ${
+                  notifications ? 'text-blue-400' : 'text-gray-400 hover:text-white'
+                }`}
+                title={notifications ? "Disable Notifications" : "Enable Notifications"}
+              >
                 <Bell className="w-4 h-4" />
               </button>
               
-              <button className="p-2 rounded-lg glass text-gray-400 hover:text-white transition-all hover:scale-105">
+              <button 
+                onClick={handleSettings}
+                className="p-2 rounded-lg glass text-gray-400 hover:text-white transition-all hover:scale-105"
+                title="Settings"
+              >
                 <Settings className="w-4 h-4" />
               </button>
             </div>
@@ -427,6 +463,54 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Expanded Widget Modal */}
+      {expandedWidget && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[10000] flex items-center justify-center p-4"
+          onClick={handleExpandedWidgetClose}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 border border-white/20 rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                  {availableWidgets.find(w => w.id === expandedWidget)?.title}
+                  {expandedWidget === 'ai-insights' && <Sparkles className="w-6 h-6 text-amber-400" />}
+                  {expandedWidget === 'trading-chart' && <TrendingUp className="w-6 h-6 text-blue-400" />}
+                </h2>
+                <button
+                  onClick={handleExpandedWidgetClose}
+                  className="p-2 rounded-lg glass text-gray-400 hover:text-white transition-all hover:scale-105"
+                  title="Close"
+                >
+                  <Minimize2 className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="max-h-[70vh] overflow-y-auto custom-scrollbar">
+                {(() => {
+                  const widget = availableWidgets.find(w => w.id === expandedWidget);
+                  if (!widget) return null;
+                  const Component = widget.component;
+                  return expandedWidget === 'trading-chart' ? (
+                    <Component height={500} />
+                  ) : (
+                    <Component />
+                  );
+                })()}
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+
       {/* Enhanced Custom Styles */}
       <style jsx>{`
         .widget-container {
@@ -489,6 +573,25 @@ export default function Dashboard() {
         
         .bg-red-500 {
           animation: pulse-red 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        /* Custom scrollbar for expanded widgets */
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 3px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.2);
+          border-radius: 3px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.3);
         }
         
         @keyframes pulse-green {

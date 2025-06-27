@@ -3,11 +3,17 @@
 import { Eye, TrendingUp, TrendingDown, Plus, X, RefreshCw } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useStockData, StockData } from '../../lib/realTimeData';
+import { useRouter } from 'next/navigation';
 
 const DEFAULT_WATCHLIST = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA'];
 
 function WatchlistItem({ symbol, onRemove }: { symbol: string; onRemove: (symbol: string) => void }) {
   const { data, loading, error } = useStockData(symbol, 30000);
+  const router = useRouter();
+
+  const handleClick = () => {
+    router.push(`/stocks/${symbol}`);
+  };
 
   if (loading && !data) {
     return (
@@ -50,7 +56,10 @@ function WatchlistItem({ symbol, onRemove }: { symbol: string; onRemove: (symbol
   };
 
   return (
-    <div className="flex items-center justify-between p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer group">
+    <div 
+      onClick={handleClick}
+      className="flex items-center justify-between p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer group"
+    >
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="font-medium text-white">{data.symbol}</span>
@@ -60,6 +69,7 @@ function WatchlistItem({ symbol, onRemove }: { symbol: string; onRemove: (symbol
               onRemove(symbol);
             }}
             className="opacity-0 group-hover:opacity-100 transition-opacity text-white/30 hover:text-white/50"
+            title="Remove from watchlist"
           >
             <X className="w-3 h-3" />
           </button>
