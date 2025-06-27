@@ -4,10 +4,10 @@ import { getMarketNews } from '@/lib/exa';
 
 export async function GET(
   request: Request,
-  { params }: { params: { symbol: string } }
+  { params }: { params: Promise<{ symbol: string }> }
 ) {
   try {
-    const { symbol } = params;
+    const { symbol } = await params;
 
     // Fetch stock data (mock for now)
     const stockData = {

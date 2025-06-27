@@ -1,3 +1,5 @@
+'use client';
+
 import { Suspense } from 'react';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -6,7 +8,11 @@ import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Brain, Newspaper, Table } from 'lucide-react';
 import { useStock } from '@/hooks/useStock';
 
-export default function StockPage({ params }: { params: { symbol: string } }) {
+interface PageProps {
+  params: { symbol: string };
+}
+
+export default function StockPage({ params }: PageProps) {
   const { data, loading, error } = useStock(params.symbol, 'NSE', true);
 
   if (loading) {
