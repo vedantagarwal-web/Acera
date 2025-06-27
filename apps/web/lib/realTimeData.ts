@@ -147,19 +147,28 @@ export const fetchMarketData = async (): Promise<MarketData> => {
 
 export const fetchNews = async (limit: number = 10): Promise<NewsItem[]> => {
   try {
-    const response = await fetch(`${API_BASE}/news?limit=${limit}`);
+    const response = await fetch(`${API_BASE}/news/trending`);
     if (!response.ok) throw new Error('Failed to fetch news');
     const data = await response.json();
     
-    return data.map((item: any) => ({
-      id: item.id || Math.random().toString(),
-      title: item.title || 'Market Update',
-      summary: item.summary || item.description || 'Market news update',
-      url: item.url || '#',
-      source: item.source || 'Market News',
-      publishedAt: item.publishedAt || item.published_at || new Date().toISOString(),
-      sentiment: item.sentiment || 'neutral'
-    }));
+    // Extract news array from the response structure
+    const newsArray = data.news || data;
+    
+    return newsArray.slice(0, limit).map((item: any) => {
+      const sentiment = item.sentiment || 'neutral';
+      const validSentiment: 'positive' | 'negative' | 'neutral' = 
+        ['positive', 'negative', 'neutral'].includes(sentiment) ? sentiment : 'neutral';
+      
+      return {
+        id: String(item.id || Math.random().toString()),
+        title: String(item.title || 'Market Update'),
+        summary: String(item.summary || item.description || item.text || 'Market news update'),
+        url: String(item.url || item.link || '#'),
+        source: String(item.source || item.domain || 'Market News'),
+        publishedAt: String(item.publishedAt || item.published_at || item.published_date || new Date().toISOString()),
+        sentiment: validSentiment
+      };
+    });
   } catch (error) {
     console.error('Error fetching news:', error);
     return generateMockNews(limit);
@@ -259,23 +268,77 @@ const generateMockMarketData = (): MarketData => ({
 });
 
 const generateMockNews = (limit: number): NewsItem[] => {
-  const headlines = [
-    'Market Rally Continues as Tech Stocks Surge',
-    'Fed Signals Potential Rate Cuts Ahead',
-    'Earnings Season Beats Expectations',
-    'Oil Prices Rise on Supply Concerns',
-    'AI Stocks Lead Market Gains'
+  const newsItems = [
+    {
+      title: 'Market Rally Continues as Tech Stocks Surge',
+      summary: 'Technology stocks led a broad market rally today as investors showed renewed confidence in growth prospects.',
+      url: 'https://www.cnbc.com/2024/01/15/market-rally-tech-stocks-surge.html',
+      source: 'CNBC',
+      sentiment: 'positive'
+    },
+    {
+      title: 'Fed Signals Potential Rate Cuts Ahead',
+      summary: 'Federal Reserve officials indicated possible interest rate reductions in the coming months as inflation pressures ease.',
+      url: 'https://www.reuters.com/markets/us/fed-signals-potential-rate-cuts-ahead-2024-01-15/',
+      source: 'Reuters',
+      sentiment: 'positive'
+    },
+    {
+      title: 'Earnings Season Beats Expectations',
+      summary: 'Corporate earnings for Q4 2023 have largely exceeded analyst expectations, boosting investor sentiment.',
+      url: 'https://www.bloomberg.com/news/articles/2024-01-15/earnings-season-beats-expectations',
+      source: 'Bloomberg',
+      sentiment: 'positive'
+    },
+    {
+      title: 'Oil Prices Rise on Supply Concerns',
+      summary: 'Crude oil futures jumped as geopolitical tensions raised concerns about potential supply disruptions.',
+      url: 'https://www.marketwatch.com/story/oil-prices-rise-on-supply-concerns-2024-01-15',
+      source: 'MarketWatch',
+      sentiment: 'neutral'
+    },
+    {
+      title: 'AI Stocks Lead Market Gains',
+      summary: 'Artificial intelligence companies continue to outperform as investors bet on the technology\'s transformative potential.',
+      url: 'https://www.wsj.com/articles/ai-stocks-lead-market-gains-2024-01-15',
+      source: 'Wall Street Journal',
+      sentiment: 'positive'
+    },
+    {
+      title: 'Bitcoin Surges Past $45,000',
+      summary: 'Bitcoin reached new multi-month highs as institutional adoption continues to drive cryptocurrency demand.',
+      url: 'https://www.coindesk.com/markets/2024/01/15/bitcoin-surges-past-45000/',
+      source: 'CoinDesk',
+      sentiment: 'positive'
+    },
+    {
+      title: 'Housing Market Shows Signs of Recovery',
+      summary: 'New home sales data suggests the real estate market may be stabilizing after months of declining activity.',
+      url: 'https://www.realtor.com/news/trends/housing-market-recovery-signs-2024/',
+      source: 'Realtor.com',
+      sentiment: 'positive'
+    },
+    {
+      title: 'Dollar Weakens Against Major Currencies',
+      summary: 'The US dollar declined against most major trading partners as dovish Fed comments weighed on the greenback.',
+      url: 'https://www.forex.com/en-us/news-and-analysis/dollar-weakens-major-currencies/',
+      source: 'Forex.com',
+      sentiment: 'negative'
+    }
   ];
   
-  return Array.from({ length: limit }, (_, i) => ({
-    id: `news-${i}`,
-    title: headlines[i % headlines.length],
-    summary: 'Market analysis and financial news update covering recent developments.',
-    url: '#',
-    source: 'Market News',
-    publishedAt: new Date(Date.now() - i * 3600000).toISOString(),
-    sentiment: ['positive', 'negative', 'neutral'][Math.floor(Math.random() * 3)] as any
-  }));
+  return Array.from({ length: limit }, (_, i) => {
+    const item = newsItems[i % newsItems.length];
+    return {
+      id: String(`news-${i}`),
+      title: String(item.title),
+      summary: String(item.summary),
+      url: String(item.url),
+      source: String(item.source),
+      publishedAt: String(new Date(Date.now() - i * 3600000).toISOString()),
+      sentiment: item.sentiment as 'positive' | 'negative' | 'neutral'
+    };
+  });
 };
 
 const generateMockSignals = (): TechnicalSignal[] => [

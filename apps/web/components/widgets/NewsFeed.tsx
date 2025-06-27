@@ -1,10 +1,22 @@
 'use client';
 
+import { useState } from 'react';
 import { Newspaper, ExternalLink, RefreshCw, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { useNews } from '../../lib/realTimeData';
 
 export function NewsFeed() {
   const { data: news, loading, error, refetch } = useNews(10, 300000); // Refresh every 5 minutes
+  const [clickedArticle, setClickedArticle] = useState<string | null>(null);
+
+  const handleArticleClick = (url: string, index: number) => {
+    setClickedArticle(`${index}-${url}`);
+    window.open(url, '_blank');
+    
+    // Reset clicked state after animation
+    setTimeout(() => {
+      setClickedArticle(null);
+    }, 200);
+  };
 
   const getSentimentIcon = (sentiment: string) => {
     switch (sentiment) {
@@ -104,37 +116,49 @@ export function NewsFeed() {
 
       {/* News Items */}
       <div className="space-y-2 max-h-[220px] overflow-y-auto">
-        {news.map((article, index) => (
-          <div
-            key={`${index}-${article.url}`}
-            className={`p-2 rounded-lg border-l-2 hover:bg-white/5 transition-colors cursor-pointer ${getSentimentColor(article.sentiment)}`}
-            onClick={() => window.open(article.url, '_blank')}
-          >
+        {news.map((article, index) => {
+          const articleKey = `${index}-${article.url}`;
+          const isClicked = clickedArticle === articleKey;
+          
+          return (
+            <div
+              key={articleKey}
+              className={`p-2 rounded-lg border-l-2 hover:bg-white/10 hover:border-l-white/30 transition-all duration-200 cursor-pointer group transform hover:scale-[1.01] ${isClicked ? 'scale-95 bg-white/20' : ''} ${getSentimentColor(article.sentiment)}`}
+              onClick={() => handleArticleClick(article.url, index)}
+              title="Click to read full article"
+            >
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
-                <h4 className="text-white text-xs font-medium line-clamp-2 leading-tight">
-                  {article.title}
+                <h4 className="text-white text-xs font-medium line-clamp-2 leading-tight group-hover:text-blue-300 transition-colors">
+                  {typeof article.title === 'string' ? article.title : 'News Article'}
                 </h4>
                 {article.summary && (
-                  <p className="text-white/50 text-xs mt-1 line-clamp-2 leading-tight">
-                    {article.summary}
+                  <p className="text-white/50 text-xs mt-1 line-clamp-2 leading-tight group-hover:text-white/70 transition-colors">
+                    {typeof article.summary === 'string' ? article.summary : 'News summary'}
                   </p>
                 )}
                 <div className="flex items-center justify-between mt-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-white/40 text-xs">{article.source}</span>
+                    <span className="text-white/40 text-xs group-hover:text-white/60 transition-colors">
+                      {typeof article.source === 'string' ? article.source : 'Unknown Source'}
+                    </span>
                     <div className="flex items-center gap-1">
                       {getSentimentIcon(article.sentiment)}
-                      <span className="text-xs text-white/40 capitalize">{article.sentiment}</span>
+                      <span className="text-xs text-white/40 capitalize group-hover:text-white/60 transition-colors">
+                        {typeof article.sentiment === 'string' ? article.sentiment : 'neutral'}
+                      </span>
                     </div>
                   </div>
-                  <span className="text-white/30 text-xs">{formatTime(article.publishedAt)}</span>
+                  <span className="text-white/30 text-xs group-hover:text-white/50 transition-colors">
+                    {formatTime(article.publishedAt)}
+                  </span>
                 </div>
               </div>
-              <ExternalLink className="w-3 h-3 text-white/30 flex-shrink-0 mt-0.5" />
+              <ExternalLink className="w-3 h-3 text-white/30 flex-shrink-0 mt-0.5 group-hover:text-blue-400 group-hover:scale-110 transition-all" />
             </div>
           </div>
-        ))}
+        );
+        })}
       </div>
 
       {/* Last Updated */}
