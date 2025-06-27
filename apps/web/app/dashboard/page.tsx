@@ -40,15 +40,14 @@ const availableWidgets = [
   { id: 'orderbook', component: OrderBook, title: 'Order Book', size: 'small' },
 ];
 
+// Optimized layout for perfect viewport fit - only 6 widgets to ensure no scrolling
 const defaultLayout = [
   'portfolio',
   'market-overview', 
   'ai-insights',
   'watchlist',
-  'news-feed',
   'signals',
-  'sentiment',
-  'orderbook'
+  'sentiment'
 ];
 
 // Dynamic background gradients based on market conditions and time
@@ -213,19 +212,20 @@ export default function Dashboard() {
   const getGridColSpan = (widgetId: string) => {
     const widget = availableWidgets.find(w => w.id === widgetId);
     switch (widget?.size) {
-      case 'large': return 'lg:col-span-2 xl:col-span-2';
-      case 'medium': return 'lg:col-span-1 xl:col-span-1';
-      case 'small': return 'lg:col-span-1 xl:col-span-1';
-      default: return 'lg:col-span-1 xl:col-span-1';
+      case 'large': return 'col-span-2'; // Large widgets take 2 columns
+      case 'medium': return 'col-span-1'; // Medium widgets take 1 column
+      case 'small': return 'col-span-1'; // Small widgets take 1 column
+      default: return 'col-span-1';
     }
   };
 
   const toggleWidget = (widgetId: string) => {
     if (activeWidgets.includes(widgetId)) {
       setActiveWidgets(activeWidgets.filter(id => id !== widgetId));
-    } else {
+    } else if (activeWidgets.length < 6) {
       setActiveWidgets([...activeWidgets, widgetId]);
     }
+    // Silently ignore if trying to add more than 6 widgets
   };
 
   return (
@@ -303,6 +303,7 @@ export default function Dashboard() {
             <h3 className="text-sm font-semibold text-white flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-amber-400" />
               Customize Widgets
+              <span className="text-xs text-gray-400 ml-2">(Max 6 for optimal fit)</span>
             </h3>
             <button 
               onClick={() => setIsCustomizing(false)}
@@ -331,8 +332,8 @@ export default function Dashboard() {
 
       {/* Full Height Widget Grid - No Scroll */}
       <div className="flex-1 overflow-hidden p-4">
-        <div className="h-full grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-3">
-          {activeWidgets.slice(0, 8).map((widgetId, index) => (
+        <div className="h-full grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {activeWidgets.slice(0, 6).map((widgetId, index) => (
             <motion.div
               key={widgetId}
               initial={{ opacity: 0, scale: 0.95 }}
@@ -376,8 +377,8 @@ export default function Dashboard() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-gray-500 text-xs">Made with</span>
-                <span className="text-red-500">❤️</span>
-                <span className="text-gray-500 text-xs">in Berkeley, CA</span>
+                <span className="text-red-500 animate-pulse">❤️</span>
+                <span className="text-gray-500 text-xs">in Berkeley, California</span>
               </div>
             </div>
           </div>
@@ -387,8 +388,7 @@ export default function Dashboard() {
       {/* Enhanced Custom Styles */}
       <style jsx>{`
         .widget-container-compact {
-          min-height: calc((100vh - 200px) / 2);
-          max-height: calc((100vh - 200px) / 2);
+          height: calc((100vh - 180px) / 2);
         }
         
         .widget-container-compact:hover {
@@ -421,22 +421,23 @@ export default function Dashboard() {
         
         /* Responsive grid adjustments */
         @media (max-width: 1024px) {
-          .lg\\:col-span-2 {
-            grid-column: span 1;
+          .col-span-2 {
+            grid-column: span 2;
           }
         }
         
         @media (max-width: 768px) {
           .widget-container-compact {
-            min-height: calc((100vh - 160px) / 3);
-            max-height: calc((100vh - 160px) / 3);
+            height: calc((100vh - 160px) / 3);
+          }
+          .col-span-2 {
+            grid-column: span 2;
           }
         }
         
         /* Fullscreen adjustments */
         :fullscreen .widget-container-compact {
-          min-height: calc((100vh - 120px) / 2);
-          max-height: calc((100vh - 120px) / 2);
+          height: calc((100vh - 120px) / 2);
         }
         
         /* Market status animations */

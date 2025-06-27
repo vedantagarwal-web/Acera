@@ -353,19 +353,101 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-white/10 py-12">
+      <footer className="relative z-10 border-t border-white/10 py-16">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="flex items-center space-x-2 mb-4 md:mb-0">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-white" />
+          {/* Main Footer Content */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+            {/* Company Info */}
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                  Acera
+                </span>
               </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                Acera
-              </span>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Democratizing institutional-grade trading analysis with AI-powered insights for retail investors.
+              </p>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-gray-400">Made with</span>
+                <span className="text-red-500 animate-pulse">❤️</span>
+                <span className="text-gray-400">in Berkeley, California</span>
+              </div>
             </div>
-            <div className="text-gray-400 text-sm">
-              © 2024 Acera. Built for the future of trading.
+
+            {/* Product */}
+            <div className="space-y-4">
+              <h3 className="text-white font-semibold">Product</h3>
+              <div className="space-y-2">
+                <Link href="/dashboard" className="block text-gray-400 hover:text-white transition-colors text-sm">Dashboard</Link>
+                <Link href="/terminal" className="block text-gray-400 hover:text-white transition-colors text-sm">Trading Terminal</Link>
+                <Link href="/stocks" className="block text-gray-400 hover:text-white transition-colors text-sm">Stock Analysis</Link>
+                <Link href="/api" className="block text-gray-400 hover:text-white transition-colors text-sm">API Access</Link>
+                <a href="#" className="block text-gray-400 hover:text-white transition-colors text-sm">Mobile App</a>
+              </div>
+            </div>
+
+            {/* Resources */}
+            <div className="space-y-4">
+              <h3 className="text-white font-semibold">Resources</h3>
+              <div className="space-y-2">
+                <a href="#" className="block text-gray-400 hover:text-white transition-colors text-sm">Documentation</a>
+                <a href="#" className="block text-gray-400 hover:text-white transition-colors text-sm">API Reference</a>
+                <a href="#" className="block text-gray-400 hover:text-white transition-colors text-sm">Tutorials</a>
+                <a href="#" className="block text-gray-400 hover:text-white transition-colors text-sm">Blog</a>
+                <a href="#" className="block text-gray-400 hover:text-white transition-colors text-sm">Community</a>
+                <a href="#" className="block text-gray-400 hover:text-white transition-colors text-sm">Support Center</a>
+              </div>
+            </div>
+
+            {/* Legal & Compliance */}
+            <div className="space-y-4">
+              <h3 className="text-white font-semibold">Legal</h3>
+              <div className="space-y-2">
+                <a href="#" className="block text-gray-400 hover:text-white transition-colors text-sm">Privacy Policy</a>
+                <a href="#" className="block text-gray-400 hover:text-white transition-colors text-sm">Terms of Service</a>
+                <a href="#" className="block text-gray-400 hover:text-white transition-colors text-sm">Cookie Policy</a>
+                <a href="#" className="block text-gray-400 hover:text-white transition-colors text-sm">Risk Disclosure</a>
+                <a href="#" className="block text-gray-400 hover:text-white transition-colors text-sm">Regulatory Info</a>
+                <a href="#" className="block text-gray-400 hover:text-white transition-colors text-sm">FINRA BrokerCheck</a>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Footer */}
+          <div className="border-t border-white/10 pt-8">
+            <div className="flex flex-col lg:flex-row items-center justify-between space-y-4 lg:space-y-0">
+              {/* Copyright & Disclaimers */}
+              <div className="flex flex-col lg:flex-row items-center space-y-2 lg:space-y-0 lg:space-x-6 text-xs text-gray-400">
+                <span>© 2024 Acera Technologies, Inc. All rights reserved.</span>
+                <span>Securities offered through Acera Securities LLC, member FINRA/SIPC</span>
+              </div>
+
+              {/* Social Links & Contact */}
+              <div className="flex items-center space-x-6">
+                <div className="flex items-center space-x-4">
+                  <a href="mailto:support@acera.ai" className="text-gray-400 hover:text-white transition-colors text-sm">
+                    support@acera.ai
+                  </a>
+                  <span className="text-gray-600">|</span>
+                  <a href="tel:+1-510-555-0123" className="text-gray-400 hover:text-white transition-colors text-sm">
+                    (510) 555-0123
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Important Disclaimers */}
+            <div className="mt-6 p-4 bg-white/5 rounded-lg border border-white/10">
+              <p className="text-xs text-gray-400 leading-relaxed">
+                <strong className="text-gray-300">Investment Disclaimer:</strong> All investments involve risk and may result in loss. 
+                Past performance does not guarantee future results. The information provided by Acera is for educational purposes only 
+                and should not be considered as personalized investment advice. Please consult with a qualified financial advisor 
+                before making investment decisions. AI-generated insights are based on historical data and market analysis but cannot 
+                predict future market movements with certainty.
+              </p>
             </div>
           </div>
         </div>
