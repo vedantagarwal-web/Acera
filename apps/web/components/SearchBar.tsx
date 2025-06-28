@@ -9,9 +9,10 @@ import { useRouter } from 'next/navigation';
 interface SearchBarProps {
   accentColor?: string;
   className?: string;
+  onSymbolSelect?: (symbol: string) => void;
 }
 
-export function SearchBar({ accentColor = 'blue', className = '' }: SearchBarProps) {
+export function SearchBar({ accentColor = 'blue', className = '', onSymbolSelect }: SearchBarProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<StockData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -98,6 +99,9 @@ export function SearchBar({ accentColor = 'blue', className = '' }: SearchBarPro
     setIsOpen(false);
     // Navigate to stock detail page
     router.push(`/stocks/${stock.symbol}`);
+    if (onSymbolSelect) {
+      onSymbolSelect(stock.symbol);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

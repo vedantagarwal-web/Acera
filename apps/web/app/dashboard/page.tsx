@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   TrendingUp, 
   Plus,
@@ -14,7 +14,8 @@ import {
   Minimize2,
   Sparkles,
   Expand,
-  Shrink
+  Shrink,
+  X
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -295,6 +296,7 @@ export default function Dashboard() {
       {/* Subtle atmospheric overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-black/10 pointer-events-none"></div>
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/5 via-transparent to-transparent pointer-events-none"></div>
+      
       {/* Professional Navigation */}
       <nav className="glass-nav border-b border-white/10">
         <div className="max-w-full px-4 py-1">
@@ -403,17 +405,17 @@ export default function Dashboard() {
       >
         <div className="h-full grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1.5">
           {activeWidgets.slice(0, 6).map((widgetId, index) => (
-                          <motion.div
-                key={widgetId}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.02 }}
-                className={`${getGridColSpan(widgetId)} group`}
-                style={{ 
-                  height: `${Math.floor(availableHeight / 2) - (mounted && window.innerWidth < 768 ? 6 : 8)}px`,
-                  maxHeight: `${Math.floor(availableHeight / 2) - (mounted && window.innerWidth < 768 ? 6 : 8)}px`
-                }}
-              >
+            <motion.div
+              key={widgetId}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: index * 0.02 }}
+              className={`${getGridColSpan(widgetId)} group`}
+              style={{ 
+                height: `${Math.floor(availableHeight / 2) - (mounted && window.innerWidth < 768 ? 6 : 8)}px`,
+                maxHeight: `${Math.floor(availableHeight / 2) - (mounted && window.innerWidth < 768 ? 6 : 8)}px`
+              }}
+            >
               <div className="h-full glass-card overflow-hidden hover:shadow-lg hover:shadow-black/20 transition-all duration-300">
                 {getWidgetComponent(widgetId)}
               </div>
@@ -448,15 +450,8 @@ export default function Dashboard() {
               <div className="text-gray-400">
                 Last updated: <span className="text-white">2 mins ago</span>
               </div>
-              {mounted && process.env.NODE_ENV === 'development' && (
-                <div className="text-gray-500 text-xs">
-                  H: {viewportHeight}px | Available: {availableHeight}px | Widget: {Math.floor(availableHeight / 2) - 8}px
-                </div>
-              )}
-              <div className="flex items-center gap-2">
-                <span className="text-gray-500 text-xs">Made with</span>
-                <span className="text-red-500 animate-pulse">❤️</span>
-                <span className="text-gray-500 text-xs">in Berkeley, California</span>
+              <div className="text-gray-400">
+                API Status: <span className="text-emerald-400">Operational</span>
               </div>
             </div>
           </div>
@@ -464,195 +459,45 @@ export default function Dashboard() {
       </div>
 
       {/* Expanded Widget Modal */}
-      {expandedWidget && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[10000] flex items-center justify-center p-4"
-          onClick={handleExpandedWidgetClose}
-        >
+      <AnimatePresence>
+        {expandedWidget && (
           <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            className="bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 border border-white/20 rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={handleExpandedWidgetClose}
           >
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-gray-900/95 backdrop-blur-md border border-white/10 rounded-xl p-6 max-w-4xl w-full max-h-[90vh] overflow-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-white">
                   {availableWidgets.find(w => w.id === expandedWidget)?.title}
-                  {expandedWidget === 'ai-insights' && <Sparkles className="w-6 h-6 text-amber-400" />}
-                  {expandedWidget === 'trading-chart' && <TrendingUp className="w-6 h-6 text-blue-400" />}
                 </h2>
                 <button
                   onClick={handleExpandedWidgetClose}
-                  className="p-2 rounded-lg glass text-gray-400 hover:text-white transition-all hover:scale-105"
-                  title="Close"
+                  className="p-2 rounded-lg hover:bg-white/10 text-white/70 hover:text-white transition-all"
                 >
-                  <Minimize2 className="w-5 h-5" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
-              <div className="max-h-[70vh] overflow-y-auto custom-scrollbar">
+              <div className="min-h-96">
                 {(() => {
                   const widget = availableWidgets.find(w => w.id === expandedWidget);
                   if (!widget) return null;
                   const Component = widget.component;
-                  return expandedWidget === 'trading-chart' ? (
-                    <Component height={500} />
-                  ) : (
-                    <Component />
-                  );
+                  return <Component />;
                 })()}
               </div>
-            </div>
+            </motion.div>
           </motion.div>
-        </motion.div>
-      )}
-
-      {/* Enhanced Custom Styles */}
-      <style jsx>{`
-        .widget-container {
-          min-height: 180px;
-        }
-        
-        .widget-container:hover {
-          transform: translateY(-1px);
-        }
-        
-        .glass-card {
-          background: rgba(0, 0, 0, 0.25);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        .glass-card:hover {
-          background: rgba(0, 0, 0, 0.35);
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5);
-          transform: translateY(-2px) scale(1.01);
-        }
-        
-        .glass-nav {
-          background: rgba(0, 0, 0, 0.4);
-          backdrop-filter: blur(24px);
-          -webkit-backdrop-filter: blur(24px);
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-          box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.3);
-        }
-        
-        /* Responsive grid adjustments */
-        @media (max-width: 1024px) {
-          .col-span-2 {
-            grid-column: span 2;
-          }
-        }
-        
-        @media (max-width: 768px) {
-          .col-span-2 {
-            grid-column: span 2;
-          }
-        }
-        
-        /* Market status animations */
-        .bg-emerald-500 {
-          animation: pulse-green 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        
-        .bg-amber-500 {
-          animation: pulse-amber 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        
-        .bg-blue-500 {
-          animation: pulse-blue 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        
-        .bg-red-500 {
-          animation: pulse-red 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        
-        /* Custom scrollbar for expanded widgets */
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 3px;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.2);
-          border-radius: 3px;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(255, 255, 255, 0.3);
-        }
-        
-        @keyframes pulse-green {
-          0%, 100% {
-            opacity: 1;
-            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
-          }
-          50% {
-            opacity: 0.8;
-            box-shadow: 0 0 0 4px rgba(34, 197, 94, 0);
-          }
-        }
-        
-        @keyframes pulse-amber {
-          0%, 100% {
-            opacity: 1;
-            box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
-          }
-          50% {
-            opacity: 0.8;
-            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0);
-          }
-        }
-        
-        @keyframes pulse-blue {
-          0%, 100% {
-            opacity: 1;
-            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
-          }
-          50% {
-            opacity: 0.8;
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0);
-          }
-        }
-        
-        @keyframes pulse-red {
-          0%, 100% {
-            opacity: 1;
-            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-          }
-          50% {
-            opacity: 0.8;
-            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0);
-          }
-        }
-        
-        /* Smooth background transitions */
-        body {
-          transition: background 1s ease-in-out;
-        }
-        
-        /* Professional gradient overlays */
-        .gradient-overlay {
-          background: linear-gradient(
-            135deg,
-            rgba(0, 0, 0, 0.1) 0%,
-            transparent 50%,
-            rgba(255, 255, 255, 0.05) 100%
-          );
-        }
-      `}</style>
+        )}
+      </AnimatePresence>
     </div>
   );
 } 

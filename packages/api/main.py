@@ -4,43 +4,48 @@ import os
 # Load environment variables first
 load_dotenv()
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from routers import stocks, screens, content, news, market, ai
+from fastapi.responses import JSONResponse
+from routers import stocks, screens, content, news, market, ai, dashboard, search
 import os
 from contextlib import asynccontextmanager
 import uvloop
 import asyncio
+import uvicorn
+import logging
 
 # Set uvloop as the default event loop for better performance
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
+# Import market data clients
+from market_data.tiingo_client import tiingo_client
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan manager for startup and shutdown events"""
+    """
+    Application lifespan manager to handle startup and shutdown
+    """
     # Startup
-    print("🚀 Acera API starting up...")
-    
-    # Initialize any required services here
-    # This is where we could set up database connections, etc.
+    logger.info("🚀 Starting Acera API server...")
+    logger.info("✅ Tiingo API client initialized")
     
     yield
     
     # Shutdown
-    print("🛑 Acera API shutting down...")
-    
-    # Clean up resources
-    from market_data.alpha_vantage import alpha_vantage_client
-    from news.exa_client import exa_news_client
-    
-    await alpha_vantage_client.close()
-    await exa_news_client.close()
+    logger.info("🔄 Shutting down Acera API server...")
+    await tiingo_client.close()
+    logger.info("✅ Cleanup completed")
 
 app = FastAPI(
     title="Acera Trading Platform API",
-    description="Advanced AI-powered trading platform with Bloomberg Terminal features",
-    version="2.0.0",
+    description="Bloomberg Terminal-style API for retail investors",
+    version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
     lifespan=lifespan
@@ -50,83 +55,87 @@ app = FastAPI(
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify exact origins
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include API routers with proper prefixes
+# Include routers
 app.include_router(stocks.router, prefix="/api", tags=["Stocks"])
-app.include_router(news.router, prefix="/api", tags=["News"])
-app.include_router(screens.router, prefix="/api", tags=["Screening"])
-app.include_router(content.router, prefix="/api", tags=["Content"])
 app.include_router(market.router, prefix="/api", tags=["Market"])
+app.include_router(news.router, prefix="/api", tags=["News"])
 app.include_router(ai.router, prefix="/api", tags=["AI"])
+app.include_router(content.router, prefix="/api", tags=["Content"])
+app.include_router(screens.router, prefix="/api", tags=["Screens"])
+app.include_router(dashboard.router, prefix="/api", tags=["Dashboard"])
+app.include_router(search.router, prefix="/api", tags=["Search"])
 
 @app.get("/")
 async def root():
-    """Root endpoint with API information"""
     return {
         "message": "Acera Trading Platform API",
-        "version": "2.0.0",
-        "description": "AI-powered trading platform with institutional-grade analysis",
+        "version": "1.0.0",
         "status": "operational",
-        "features": [
-            "Real-time US market data via Alpha Vantage",
-            "AI-powered analyst reports",
-            "Comprehensive news coverage via Exa",
-            "Advanced charting and technical analysis",
-            "Institutional-grade stock research"
-        ],
-        "docs": "/docs",
-        "redoc": "/redoc"
+        "endpoints": {
+            "stocks": "/api/stocks",
+            "market": "/api/market",
+            "news": "/api/news",
+            "ai": "/api/ai",
+            "content": "/api/content",
+            "screens": "/api/screens",
+            "dashboard": "/api/dashboard",
+            "search": "/api/search",
+            "docs": "/docs",
+            "health": "/api/health"
+        }
     }
 
-@app.get("/health")
+@app.get("/api/health")
 async def health_check():
-    """Health check endpoint for monitoring"""
-    try:
-        # Test core services
-        from market_data.alpha_vantage import alpha_vantage_client
-        from news.exa_client import exa_news_client
-        
-        # Simple health checks (non-blocking)
-        services_status = {
-            "api": "healthy",
-            "alpha_vantage": "operational",
-            "exa_news": "operational",
-            "ai_analysts": "operational"
-        }
-        
-        return {
-            "status": "healthy",
-            "version": "2.0.0",
-            "services": services_status,
-            "timestamp": "2024-01-01T00:00:00Z"  # Would use actual timestamp
-        }
-        
-    except Exception as e:
-        return {
-            "status": "degraded",
-            "error": str(e),
-            "timestamp": "2024-01-01T00:00:00Z"
-        }
-
-@app.get("/api/status")
-async def api_status():
-    """Detailed API status for internal monitoring"""
+    """Main health check endpoint"""
     return {
-        "api_version": "2.0.0",
-        "environment": os.getenv("ENVIRONMENT", "development"),
-        "alpha_vantage_configured": bool(os.getenv("ALPHA_VANTAGE_API_KEY")),
-        "exa_configured": bool(os.getenv("EXA_API_KEY")),
-        "openai_configured": bool(os.getenv("OPENAI_API_KEY")),
-        "features_enabled": {
-            "real_time_quotes": True,
-            "ai_analysis": True,
-            "news_integration": True,
-            "earnings_analysis": True,
-            "sector_analysis": True
+        "status": "healthy",
+        "service": "acera-api",
+        "version": "1.0.0",
+        "components": {
+            "fastapi": "operational",
+            "tiingo": "operational",
+            "exa": "operational",
+            "ai_agents": "operational"
         }
-    } 
+    }
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request, exc):
+    """Global HTTP exception handler"""
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": exc.detail,
+            "status_code": exc.status_code,
+            "timestamp": "2024-01-15T12:00:00Z"
+        }
+    )
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request, exc):
+    """Global exception handler for unexpected errors"""
+    logger.error(f"Unexpected error: {exc}")
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "Internal server error",
+            "details": str(exc),
+            "timestamp": "2024-01-15T12:00:00Z"
+        }
+    )
+
+if __name__ == "__main__":
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,
+        log_level="info"
+    ) 

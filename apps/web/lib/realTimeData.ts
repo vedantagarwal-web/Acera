@@ -66,7 +66,7 @@ export interface AIInsight {
 
 // API Base URL
 const API_BASE = process.env.NODE_ENV === 'development' 
-  ? 'http://localhost:8000/api' 
+  ? 'http://127.0.0.1:8000/api' 
   : '/api';
 
 // Real-time data fetching functions

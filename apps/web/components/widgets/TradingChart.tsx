@@ -1,227 +1,290 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, BarChart3, Settings, RefreshCw, Target } from 'lucide-react';
-import { CandlestickChart } from '../charts/CandlestickChart';
-import { useStockData } from '../../lib/realTimeData';
+import { motion } from 'framer-motion';
+import { SimpleChart } from '../charts/SimpleChart';
+import { SearchBar } from '../SearchBar';
+import { 
+  TrendingUp, 
+  TrendingDown, 
+  BarChart3, 
+  Activity,
+  Maximize2,
+  Minimize2,
+  RefreshCw
+} from 'lucide-react';
 
 interface TradingChartProps {
-  symbol?: string;
-  height?: number;
+  isExpanded?: boolean;
+  onToggleExpanded?: () => void;
+  accentColor?: string;
+  availableHeight?: number;
 }
 
-// Generate mock OHLC data for demonstration
-const generateOHLCData = (basePrice: number, days: number = 100) => {
-  const data = [];
-  let currentPrice = basePrice;
-  
-  for (let i = 0; i < days; i++) {
-    const timestamp = Date.now() - (days - i) * 24 * 60 * 60 * 1000;
-    
-    // Generate realistic OHLC data
-    const volatility = 0.02; // 2% daily volatility
-    const trend = (Math.random() - 0.5) * 0.01; // Small random trend
-    
-    const open = currentPrice;
-    const change = (Math.random() - 0.5) * volatility * currentPrice;
-    const close = Math.max(open + change + (trend * currentPrice), 1);
-    
-    const dailyRange = Math.abs(close - open) * 2;
-    const high = Math.max(open, close) + (Math.random() * dailyRange * 0.3);
-    const low = Math.min(open, close) - (Math.random() * dailyRange * 0.3);
-    
-    const volume = Math.floor(Math.random() * 10000000) + 1000000; // 1M to 11M volume
-    
-    data.push({
-      time: new Date(timestamp).toISOString(),
-      timestamp,
-      open: Math.max(open, 0.01),
-      high: Math.max(high, Math.max(open, close)),
-      low: Math.max(low, 0.01),
-      close: Math.max(close, 0.01),
-      volume
-    });
-    
-    currentPrice = close;
-  }
-  
-  return data;
-};
+interface ChartData {
+  time: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
 
-export function TradingChart({ symbol = 'AAPL', height = 350 }: TradingChartProps) {
-  const [ohlcData, setOhlcData] = useState<any[]>([]);
-  const [timeRange, setTimeRange] = useState('1D');
-  const [showIndicators, setShowIndicators] = useState(true);
-  const [showVolume, setShowVolume] = useState(true);
-  const [loading, setLoading] = useState(true);
-  
-  const { data: stockData, loading: stockLoading } = useStockData(symbol, 30000);
+export function TradingChart({ 
+  isExpanded = false, 
+  onToggleExpanded, 
+  accentColor = 'blue',
+  availableHeight = 400 
+}: TradingChartProps) {
+  const [selectedSymbol, setSelectedSymbol] = useState('HOOD');
+  const [chartData, setChartData] = useState<ChartData[]>([]);
+  const [stockInfo, setStockInfo] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [timeframe, setTimeframe] = useState('1D');
 
-  useEffect(() => {
-    const fetchOHLCData = async () => {
-      setLoading(true);
-      try {
-        // In a real app, this would fetch from your OHLC API endpoint
-        // For now, generate mock data based on current stock price
-        const basePrice = stockData?.price || 150;
-        const mockData = generateOHLCData(basePrice, getDaysForTimeRange(timeRange));
-        setOhlcData(mockData);
-      } catch (error) {
-        console.error('Error fetching OHLC data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Fetch chart data for selected symbol
+  const fetchChartData = async (symbol: string, interval: string = '1D') => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Fetch stock details
+      const stockResponse = await fetch(`http://127.0.0.1:8000/api/stocks/${symbol}`);
+      if (!stockResponse.ok) throw new Error('Failed to fetch stock data');
+      const stockData = await stockResponse.json();
+      setStockInfo(stockData);
 
-    fetchOHLCData();
-  }, [symbol, timeRange, stockData]);
-
-  const getDaysForTimeRange = (range: string) => {
-    switch (range) {
-      case '1D': return 24; // 24 hours of data
-      case '5D': return 120; // 5 days * 24 hours
-      case '1M': return 30;
-      case '3M': return 90;
-      case '1Y': return 365;
-      default: return 30;
+      // Generate mock chart data for now (replace with real API)
+      const mockChartData = generateMockChartData(stockData.price || 100, 100);
+      setChartData(mockChartData);
+      
+    } catch (err) {
+      console.error('Error fetching chart data:', err);
+      setError('Failed to load chart data');
+      
+      // Generate fallback data
+      const fallbackData = generateMockChartData(100 + Math.random() * 200, 100);
+      setChartData(fallbackData);
+      setStockInfo({
+        symbol: symbol,
+        name: `${symbol} Inc.`,
+        price: fallbackData[fallbackData.length - 1].close,
+        change: Math.random() * 10 - 5,
+        changePercent: (Math.random() - 0.5) * 5
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleTimeRangeChange = (range: string) => {
-    setTimeRange(range);
+  // Generate realistic mock chart data
+  const generateMockChartData = (basePrice: number, points: number): ChartData[] => {
+    const data: ChartData[] = [];
+    let price = basePrice;
+    const now = new Date();
+    
+    for (let i = points; i >= 0; i--) {
+      const time = new Date(now.getTime() - i * 5 * 60 * 1000); // 5-minute intervals
+      
+      // Generate realistic price movement
+      const change = (Math.random() - 0.5) * 0.02; // ±1% change
+      price = price * (1 + change);
+      
+      const open = price;
+      const volatility = 0.005; // 0.5% volatility
+      const high = open * (1 + Math.random() * volatility);
+      const low = open * (1 - Math.random() * volatility);
+      const close = low + Math.random() * (high - low);
+      const volume = Math.floor(Math.random() * 5000000) + 1000000;
+      
+      data.push({
+        time: time.toISOString(),
+        open,
+        high,
+        low,
+        close,
+        volume
+      });
+      
+      price = close; // Set price for next iteration
+    }
+    
+    return data;
   };
 
-  if (loading || stockLoading) {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-blue-400" />
-            <span className="text-sm font-medium text-white">{symbol} Chart</span>
-            <RefreshCw className="w-3 h-3 text-white/30 animate-spin" />
-          </div>
-        </div>
-        <div className="h-80 bg-white/5 rounded-lg animate-pulse"></div>
-      </div>
-    );
-  }
+  // Load default symbol on mount
+  useEffect(() => {
+    fetchChartData(selectedSymbol, timeframe);
+  }, [selectedSymbol, timeframe]);
 
-  const currentPrice = stockData?.price || ohlcData[ohlcData.length - 1]?.close || 0;
-  const previousClose = ohlcData[ohlcData.length - 2]?.close || currentPrice;
-  const change = currentPrice - previousClose;
-  const changePercent = (change / previousClose) * 100;
+  // Handle symbol selection from search
+  const handleSymbolSelect = (symbol: string) => {
+    setSelectedSymbol(symbol);
+  };
+
+  // Handle timeframe change
+  const handleTimeframeChange = (newTimeframe: string) => {
+    setTimeframe(newTimeframe);
+    fetchChartData(selectedSymbol, newTimeframe);
+  };
+
+  const chartHeight = isExpanded ? availableHeight - 120 : 300;
+
+  const currentPrice = stockInfo?.price || 0;
+  const priceChange = stockInfo?.change || 0;
+  const priceChangePercent = stockInfo?.changePercent || 0;
 
   return (
-    <div className="space-y-4">
-      {/* Header with Stock Info */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+    <motion.div 
+      className={`glass-card border border-white/10 rounded-xl ${
+        isExpanded ? 'fixed inset-4 z-50' : 'h-full'
+      }`}
+      layout
+      transition={{ duration: 0.3 }}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b border-white/10">
+        <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-blue-400" />
-            <span className="text-sm font-medium text-white">{symbol}</span>
+            <BarChart3 className={`w-5 h-5 text-${accentColor}-500`} />
+            <h3 className="font-semibold text-white">Trading Chart</h3>
           </div>
-          <div className="text-right">
-            <div className="text-lg font-bold text-white">
-              ${currentPrice.toFixed(2)}
-            </div>
-            <div className="flex items-center gap-1 text-xs">
-              {changePercent >= 0 ? (
-                <TrendingUp className="w-2.5 h-2.5 text-emerald-500" />
-              ) : (
-                <TrendingDown className="w-2.5 h-2.5 text-red-500" />
-              )}
-              <span className={`${changePercent >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                ${Math.abs(change).toFixed(2)} ({Math.abs(changePercent).toFixed(2)}%)
-              </span>
-            </div>
+          
+          {/* Symbol and Price Info */}
+          <div className="flex items-center gap-3">
+            <span className="text-lg font-bold text-white">{selectedSymbol}</span>
+            {stockInfo && (
+              <div className="flex items-center gap-2">
+                <span className="text-xl font-bold text-white">
+                  ${currentPrice.toFixed(2)}
+                </span>
+                <div className={`flex items-center gap-1 ${
+                  priceChange >= 0 ? 'text-emerald-500' : 'text-red-500'
+                }`}>
+                  {priceChange >= 0 ? 
+                    <TrendingUp className="w-4 h-4" /> : 
+                    <TrendingDown className="w-4 h-4" />
+                  }
+                  <span className="text-sm">
+                    {priceChange >= 0 ? '+' : ''}${priceChange.toFixed(2)} ({priceChangePercent.toFixed(2)}%)
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Chart Settings */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
+          {/* Search Bar */}
+          <div className="hidden md:block">
+            <SearchBar 
+              accentColor={accentColor}
+              className="w-48"
+              onSymbolSelect={handleSymbolSelect}
+            />
+          </div>
+
+          {/* Refresh Button */}
           <button
-            onClick={() => setShowIndicators(!showIndicators)}
-            className={`p-1.5 rounded transition-all text-xs ${
-              showIndicators ? 'bg-blue-500/20 text-blue-400' : 'text-white/60 hover:text-white/80'
+            onClick={() => fetchChartData(selectedSymbol, timeframe)}
+            disabled={loading}
+            className={`p-2 rounded-lg glass border border-white/10 text-gray-400 hover:text-white transition-colors ${
+              loading ? 'animate-spin' : ''
             }`}
+            title="Refresh Data"
           >
-            MA
+            <RefreshCw className="w-4 h-4" />
           </button>
-          <button
-            onClick={() => setShowVolume(!showVolume)}
-            className={`p-1.5 rounded transition-all text-xs ${
-              showVolume ? 'bg-blue-500/20 text-blue-400' : 'text-white/60 hover:text-white/80'
-            }`}
-          >
-            VOL
-          </button>
-          <button className="p-1.5 rounded glass text-white/60 hover:text-white/80 transition-all">
-            <Settings className="w-3 h-3" />
-          </button>
+
+          {/* Expand/Collapse Button */}
+          {onToggleExpanded && (
+            <button
+              onClick={onToggleExpanded}
+              className="p-2 rounded-lg glass border border-white/10 text-gray-400 hover:text-white transition-colors"
+              title={isExpanded ? "Minimize" : "Maximize"}
+            >
+              {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Candlestick Chart */}
-      <div className="bg-white/5 rounded-lg p-3">
-        <CandlestickChart
-          data={ohlcData}
-          height={height}
-          showVolume={showVolume}
-          showMovingAverage={showIndicators}
-          timeRange={timeRange as any}
-          onTimeRangeChange={handleTimeRangeChange}
+      {/* Mobile Search Bar */}
+      <div className="md:hidden p-4 border-b border-white/10">
+        <SearchBar 
+          accentColor={accentColor}
+          onSymbolSelect={handleSymbolSelect}
         />
       </div>
 
-      {/* Trading Metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-        <div className="p-2 rounded-lg bg-white/5">
-          <div className="text-xs text-white/70 mb-1">24h High</div>
-          <div className="text-sm font-medium text-emerald-400">
-            ${Math.max(...ohlcData.slice(-24).map(d => d.high)).toFixed(2)}
+      {/* Chart Content */}
+      <div className="relative">
+        {loading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
+            <div className="text-white text-center">
+              <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+              <p className="text-sm">Loading {selectedSymbol} data...</p>
+            </div>
           </div>
-        </div>
-        <div className="p-2 rounded-lg bg-white/5">
-          <div className="text-xs text-white/70 mb-1">24h Low</div>
-          <div className="text-sm font-medium text-red-400">
-            ${Math.min(...ohlcData.slice(-24).map(d => d.low)).toFixed(2)}
+        )}
+
+        {error && (
+          <div className="p-4 text-center">
+            <div className="text-red-400 text-sm mb-2">{error}</div>
+            <button
+              onClick={() => fetchChartData(selectedSymbol, timeframe)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+            >
+              Retry
+            </button>
           </div>
-        </div>
-        <div className="p-2 rounded-lg bg-white/5">
-          <div className="text-xs text-white/70 mb-1">Volume</div>
-          <div className="text-sm font-medium text-blue-400">
-            {((ohlcData[ohlcData.length - 1]?.volume || 0) / 1e6).toFixed(1)}M
-          </div>
-        </div>
-        <div className="p-2 rounded-lg bg-white/5">
-          <div className="text-xs text-white/70 mb-1">Avg Volume</div>
-          <div className="text-sm font-medium text-white/80">
-            {(ohlcData.slice(-10).reduce((sum, d) => sum + d.volume, 0) / 10 / 1e6).toFixed(1)}M
-          </div>
-        </div>
+        )}
+
+        {chartData.length > 0 && (
+          <SimpleChart
+            symbol={selectedSymbol}
+            data={chartData}
+            interval={timeframe}
+            height={chartHeight}
+            showVolume={true}
+            showTechnicals={isExpanded}
+            className="w-full"
+          />
+        )}
       </div>
 
-      {/* Technical Levels */}
-      <div className="grid grid-cols-2 gap-2">
-        <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-          <div className="flex items-center gap-2 mb-1">
-            <Target className="w-3 h-3 text-emerald-400" />
-            <span className="text-emerald-400 text-xs">Support</span>
-          </div>
-          <div className="text-white text-sm font-medium">
-            ${Math.min(...ohlcData.slice(-20).map(d => d.low)).toFixed(2)}
+      {/* Footer with additional info */}
+      {stockInfo && !isExpanded && (
+        <div className="p-4 border-t border-white/10">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+            <div>
+              <div className="text-gray-400">Volume</div>
+              <div className="text-white font-medium">
+                {(chartData[chartData.length - 1]?.volume / 1000000).toFixed(1)}M
+              </div>
+            </div>
+            <div>
+              <div className="text-gray-400">Market Cap</div>
+              <div className="text-white font-medium">
+                ${(stockInfo.marketCap / 1000000000).toFixed(1)}B
+              </div>
+            </div>
+            <div>
+              <div className="text-gray-400">52W High</div>
+              <div className="text-white font-medium">
+                ${stockInfo.high52Week?.toFixed(2) || '--'}
+              </div>
+            </div>
+            <div>
+              <div className="text-gray-400">52W Low</div>
+              <div className="text-white font-medium">
+                ${stockInfo.low52Week?.toFixed(2) || '--'}
+              </div>
+            </div>
           </div>
         </div>
-        <div className="p-2 rounded-lg bg-red-500/10 border border-red-500/20">
-          <div className="flex items-center gap-2 mb-1">
-            <Target className="w-3 h-3 text-red-400" />
-            <span className="text-red-400 text-xs">Resistance</span>
-          </div>
-          <div className="text-white text-sm font-medium">
-            ${Math.max(...ohlcData.slice(-20).map(d => d.high)).toFixed(2)}
-          </div>
-        </div>
-      </div>
-    </div>
+      )}
+    </motion.div>
   );
 } 
