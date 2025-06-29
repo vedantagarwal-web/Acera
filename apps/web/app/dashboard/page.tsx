@@ -15,7 +15,8 @@ import {
   Sparkles,
   Expand,
   Shrink,
-  X
+  X,
+  Brain
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -314,6 +315,14 @@ export default function Dashboard() {
               <div className="text-xs text-gray-400 hidden md:block">
                 Trading Dashboard
               </div>
+              
+              <Link 
+                href="/ai-analyst"
+                className="hidden md:flex items-center px-3 py-1.5 text-xs rounded-lg glass text-gray-300 hover:text-white transition-all hover:scale-105"
+              >
+                <Brain className="w-3 h-3 mr-1" />
+                AI Analysts
+              </Link>
             </div>
             
             <div className="flex items-center space-x-2">

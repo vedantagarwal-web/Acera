@@ -73,6 +73,12 @@ export default function LandingPage() {
             Dashboard
           </Link>
           <Link
+            href="/ai-analyst"
+            className="px-6 py-2 rounded-lg bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
+          >
+            AI Analysts
+          </Link>
+          <Link
             href="/terminal"
             className="px-6 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 transition-all duration-300"
           >
@@ -382,6 +388,7 @@ export default function LandingPage() {
               <h3 className="text-white font-semibold">Product</h3>
               <div className="space-y-2">
                 <Link href="/dashboard" className="block text-gray-400 hover:text-white transition-colors text-sm">Dashboard</Link>
+                <Link href="/ai-analyst" className="block text-gray-400 hover:text-white transition-colors text-sm">AI Analysts</Link>
                 <Link href="/terminal" className="block text-gray-400 hover:text-white transition-colors text-sm">Trading Terminal</Link>
                 <Link href="/stocks" className="block text-gray-400 hover:text-white transition-colors text-sm">Stock Analysis</Link>
                 <Link href="/api" className="block text-gray-400 hover:text-white transition-colors text-sm">API Access</Link>
