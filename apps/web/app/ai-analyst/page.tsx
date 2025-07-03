@@ -178,7 +178,7 @@ export default function AIAnalystPage() {
       
       // Add timeout to prevent hanging requests
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout for Perplexity API
       
       const response = await fetch(apiUrl, {
         signal: controller.signal,
@@ -201,7 +201,7 @@ export default function AIAnalystPage() {
     } catch (error) {
       console.error('Failed to analyze stock:', error);
       if (error.name === 'AbortError') {
-        console.error('Request timed out after 10 seconds');
+        console.error('Request timed out after 30 seconds');
       }
       setAnalysis(null);
     } finally {
